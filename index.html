@@ -54,6 +54,7 @@
     p {
       font-size: 0.95em;
       margin: 0;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -154,7 +155,7 @@
     }
 
     function atualizarTudo() {
-  atualizarAreasRoleta();
+      atualizarRegioesRoleta();
       document.getElementById('numerosLista').innerText = numeros.join(', ') || 'Nenhum número ainda.';
       atualizarFrequencia();
       detectarPadroes();
@@ -316,32 +317,63 @@
       document.getElementById('sugestao').innerText = `Dúzia mais frequente: ${duziaStr}\nColuna mais frequente: ${colunaStr}\nSugestão de números: ${sugestao.join(', ')}`;
     }
 
+    // Esta função antiga está mantida, mas não é chamada, deixei por segurança se quiser manter o conteúdo original:
+    /*
+    function atualizarAreasRoleta() {
+      const areas = {
+        'Área do 0': [26,3,35,12,28,32,15,19,4],
+        'Área do 34': [17,25,2,21,6,27,13,36],
+        'Área do 10': [11,30,8,23,5,24,16,33],
+        'Área do 9': [1,20,14,31,22,18,29,7]
+      };
+
+      const contagem = {};
+
+      for (const [nome, numerosArea] of Object.entries(areas)) {
+        contagem[nome] = numeros.filter(n => numerosArea.includes(n)).length;
+      }
+
+      const ordenado = Object.entries(contagem)
+        .sort((a, b) => b[1] - a[1])
+        .filter(([_, count]) => count > 0);
+
+      document.getElementById('areasRoleta').innerText =
+        ordenado.length === 0
+          ? 'Nenhum número correspondente às áreas ainda.'
+          : ordenado.map(([area, count]) => `${area}: ${count}x`).join('\n');
+    }
+    */
+
+    // Função nova que analisa as regiões Tiers, Orphelins, Voisins e Zero e sugere jogada:
+    function atualizarRegioesRoleta() {
+      const tiers = [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33];
+      const orphelins = [1, 20, 14, 31, 9, 17, 34, 6];
+      const voisins = [19, 4, 21, 2, 25, 22, 18, 29, 7, 28];
+      const zero = [12, 35, 3, 26, 0, 32, 15];
+
+      const freqTiers = numeros.filter(n => tiers.includes(n)).length;
+      const freqOrphelins = numeros.filter(n => orphelins.includes(n)).length;
+      const freqVoisins = numeros.filter(n => voisins.includes(n)).length;
+      const freqZero = numeros.filter(n => zero.includes(n)).length;
+
+      const regioesFreq = [
+        { nome: 'Tiers', freq: freqTiers },
+        { nome: 'Orphelins', freq: freqOrphelins },
+        { nome: 'Voisins', freq: freqVoisins },
+        { nome: 'Zero', freq: freqZero }
+      ];
+
+      regioesFreq.sort((a, b) => b.freq - a.freq);
+
+      const textoFreq = regioesFreq.map(r => `${r.nome}: ${r.freq}x`).join('\n');
+      const sugestao = regioesFreq[0].freq > 0 
+        ? `Região mais provável para entrada: ${regioesFreq[0].nome}`
+        : 'Nenhuma região com números registrados ainda.';
+
+      document.getElementById('areasRoleta').innerText = textoFreq + '\n\n' + sugestao;
+    }
+
     atualizarTudo();
-  
-
-function atualizarAreasRoleta() {
-  const areas = {
-    'Área do 0': [26,3,35,12,28,32,15,19,4],
-    'Área do 34': [17,25,2,21,6,27,13,36],
-    'Área do 10': [11,30,8,23,5,24,16,33],
-    'Área do 9': [1,20,14,31,22,18,29,7]
-  };
-
-  const contagem = {};
-
-  for (const [nome, numerosArea] of Object.entries(areas)) {
-    contagem[nome] = numeros.filter(n => numerosArea.includes(n)).length;
-  }
-
-  const ordenado = Object.entries(contagem)
-    .sort((a, b) => b[1] - a[1])
-    .filter(([_, count]) => count > 0);
-
-  document.getElementById('areasRoleta').innerText =
-    ordenado.length === 0
-      ? 'Nenhum número correspondente às áreas ainda.'
-      : ordenado.map(([area, count]) => `${area}: ${count}x`).join('\n');
-}
 </script>
 </body>
 </html>
