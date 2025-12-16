@@ -1,5 +1,5 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
@@ -31,68 +31,54 @@ header{padding:16px;text-align:center;border-bottom:1px solid var(--border)}
 .red{background:var(--red);color:white}
 .black{background:#020617;color:white}
 .green{background:var(--green);color:white}
-.history{display:flex;gap:6px;overflow-x:auto}
+.history{display:flex;gap:6px;overflow-x:auto;flex-wrap:wrap}
 .history span{padding:6px 10px;border-radius:8px;font-weight:600;color:white}
 .alert{padding:10px;border-radius:10px;border:1px dashed var(--border);color:#fbbf24}
 .info{font-size:13px;color:var(--muted)}
 canvas{max-height:220px}
-@media(max-width:900px){
-  .dashboard{grid-template-columns:1fr}
-}
-
-@media(max-width:600px){
-  header h1{font-size:18px}
-  .card{padding:12px;border-radius:14px}
-  .card h3{font-size:13px}
-  .grid{grid-template-columns:repeat(5,1fr)}
-  .grid button{padding:8px;font-size:13px}
-  .history span{padding:5px 8px;font-size:12px}
-  canvas{max-height:180px}
-  .btn{padding:12px;font-size:14px}
-}
-
-@media(max-width:400px){
-  .grid{grid-template-columns:repeat(4,1fr)}
-  header{padding:12px}
-  header h1{font-size:16px}
-}}
+@media(max-width:900px){.dashboard{grid-template-columns:1fr}}
+@media(max-width:600px){header h1{font-size:18px}.grid{grid-template-columns:repeat(5,1fr)}canvas{max-height:180px}}
+@media(max-width:400px){.grid{grid-template-columns:repeat(4,1fr)}header h1{font-size:16px}}
 </style>
-
 </head>
 <body>
-<header><h1>🎰 Dashboard Profissional de Roleta – Completo</h1></header>
+<header><h1>🎰 Dashboard Profissional de Roleta</h1></header>
 <div class="dashboard">
 
+<!-- Entrada Rápida -->
 <div class="card">
 <h3>🎯 Entrada Rápida</h3>
 <div class="grid" id="tecladoTopo"></div>
 <button class="btn red" style="margin-top:10px" onclick="novaSessao()">🧹 Nova Sessão</button>
 </div>
 
+<!-- Sugestão de Jogada -->
 <div class="card">
-<h3>📊 Sessão Atual</h3>
-<p class="info" id="infoSessao"></p>
+<h3>🎯 Sugestão de Jogada</h3>
+<p id="sugestao" class="info"></p>
+<p id="intersecao" class="info"></p>
 </div>
 
+<!-- Sessão Atual -->
 <div class="card">
-<h3>🚨 Alertas Inteligentes</h3>
-<div id="alerta" class="alert">Nenhum alerta ativo</div>
+<h3>📍 Sessão Atual</h3>
+<p id="sessaoAtual" class="info"></p>
 </div>
 
-<div class="card"><h3>📜 Histórico (Sessão)</h3><div id="historico" class="history"></div></div>
+<!-- Histórico da Sessão -->
+<div class="card">
+<h3>📜 Histórico (Sessão)</h3>
+<div id="historico" class="history"></div>
+</div>
 
+<!-- Gráficos -->
 <div class="card"><h3>📊 Frequência</h3><canvas id="graficoFreq"></canvas></div>
 <div class="card"><h3>📊 Dúzias</h3><canvas id="graficoDuzias"></canvas></div>
 <div class="card"><h3>📊 Colunas</h3><canvas id="graficoColunas"></canvas></div>
 <div class="card"><h3>🎨 Cores</h3><canvas id="graficoCores"></canvas></div>
-
 <div class="card"><h3>🔥 Heatmap por Área</h3><canvas id="graficoAreas"></canvas><p id="areasSugestao" class="info"></p></div>
-
 <div class="card"><h3>⏳ Ciclos de Atraso</h3><p id="atrasos" class="info"></p></div>
-
-<div class="card"><h3>🎯 Sugestão de Jogada</h3><p id="sugestao" class="info"></p></div>
-
-</div>
+<div class="card"><h3>🚨 Alertas</h3><div id="alerta" class="alert">Nenhum alerta ativo</div></div>
 
 <script>
 const vermelho=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
@@ -100,144 +86,196 @@ const preto=[2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
 const col1=[1,4,7,10,13,16,19,22,25,28,31,34];
 const col2=[2,5,8,11,14,17,20,23,26,29,32,35];
 const col3=[3,6,9,12,15,18,21,24,27,30,33,36];
-
 const tiers=[5,8,10,11,13,16,23,24,27,30,33,36];
 const orp=[1,6,9,14,17,20,31,34];
 const voi=[0,2,3,4,7,12,15,18,21,19,22,26,25,28,29,32,35];
 
 let sessao=[];
-let inicioSessao=new Date();
-
+let inicioSessao = null;
 let chartFreq,chartDuzias,chartColunas,chartCores,chartAreas;
 
+// Registro de números
 function processarNumero(n){
   sessao.push(n);
+  if(!inicioSessao) inicioSessao = new Date();
   atualizarHistorico(n);
   atualizarTudo();
 }
 
+// Nova sessão
 function novaSessao(){
   sessao=[];
-  resultado=0;
-  inicioSessao=new Date();
+  inicioSessao = new Date();
   document.getElementById('historico').innerHTML='';
   atualizarTudo();
 }
 
+// Atualizar histórico visual
 function atualizarHistorico(n){
   const h=document.getElementById('historico');
   const s=document.createElement('span');
   s.innerText=n;
   s.style.background=vermelho.includes(n)?'var(--red)':preto.includes(n)?'#020617':'var(--green)';
   h.prepend(s);
-  if(h.children.length>20)h.removeChild(h.lastChild);
+  if(h.children.length>50) h.removeChild(h.lastChild);
 }
 
-function atualizarTudo(){
-  document.getElementById('infoSessao').innerText=`Giros: ${sessao.length} | Início: ${inicioSessao.toLocaleTimeString()}`;
-  atualizarFrequencia();atualizarDuzias();atualizarColunas();atualizarCores();atualizarAreas();atualizarAtrasos();atualizarSugestao();verificarAlertas();
+// Sessão atual
+function atualizarSessaoAtual(){
+  const p=document.getElementById('sessaoAtual');
+  if(!inicioSessao) inicioSessao=new Date();
+  const hora=inicioSessao.toLocaleTimeString();
+  p.innerText=`Início: ${hora} | Giros: ${sessao.length}`;
 }
 
+// Avaliação da sessão
+function avaliarSessao(){
+  if(sessao.length<12) return {estado:'Curta', ok:false};
+  let alt=0;
+  for(let i=1;i<sessao.length;i++){
+    if((vermelho.includes(sessao[i])&&preto.includes(sessao[i-1]))||(preto.includes(sessao[i])&&vermelho.includes(sessao[i-1]))) alt++;
+  }
+  const taxa=alt/(sessao.length-1);
+  if(taxa>0.65) return {estado:'Instável', ok:false};
+  if(taxa<0.35) return {estado:'Quente', ok:true};
+  return {estado:'Estável', ok:true};
+}
+
+// Sugestão de jogada com interseção final
+function atualizarSugestao(){
+  const card=document.getElementById('sugestao');
+  const intersecao=document.getElementById('intersecao');
+  intersecao.innerText='';
+
+  if(sessao.length<10){
+    card.innerText='Sessão curta — aguarde';
+    return;
+  }
+
+  const estado=avaliarSessao();
+  if(!estado.ok){
+    card.innerText=`Sessão ${estado.estado} — sem entrada`;
+    return;
+  }
+
+  const areas=[['Tiers',tiers],['Orphelins',orp],['Voisins',voi]];
+  const score=areas.map(a=>a[1].filter(n=>sessao.includes(n)).length);
+  const ia=score.indexOf(Math.max(...score));
+  if(score[ia]<3){
+    card.innerText='Sem área dominante';
+    return;
+  }
+
+  const d=atualizarDuzias();
+  const c=atualizarColunas();
+  const id=d.indexOf(Math.max(...d));
+  const ic=c.indexOf(Math.max(...c));
+  const duz=[Array.from({length:12},(_,i)=>i+1),Array.from({length:12},(_,i)=>i+13),Array.from({length:12},(_,i)=>i+25)][id];
+  const col=[col1,col2,col3][ic];
+
+  let cand=areas[ia][1].filter(n=>duz.includes(n)&&col.includes(n));
+  cand=cand.filter(n=>!sessao.slice(-3).includes(n));
+
+  if(cand.length<3){
+    card.innerText='Confluência fraca';
+    return;
+  }
+
+  card.innerText='Entrada por confluência ativa (área + dúzia + coluna)';
+  intersecao.innerHTML=`🎯 Interseção final:<br>👉 ${cand.join(', ')}<br>📌 Só esses números.`;
+}
+
+// Atualizar gráficos
 function atualizarFrequencia(){
-  const c=Array(37).fill(0);sessao.forEach(n=>c[n]++);
-  if(chartFreq)chartFreq.destroy();
+  const c=Array(37).fill(0);
+  sessao.forEach(n=>c[n]++);
+  if(chartFreq) chartFreq.destroy();
   chartFreq=new Chart(graficoFreq,{type:'bar',data:{labels:[...Array(37).keys()],datasets:[{data:c,backgroundColor:'#3b82f6'}]},options:{plugins:{legend:{display:false}}}});
 }
 
-function atualizarDuzias(){const d=[0,0,0];sessao.forEach(n=>{if(n>=1&&n<=12)d[0]++;else if(n<=24)d[1]++;else if(n<=36)d[2]++;});if(chartDuzias)chartDuzias.destroy();chartDuzias=new Chart(graficoDuzias,{type:'bar',data:{labels:['1ª','2ª','3ª'],datasets:[{data:d,backgroundColor:['#f59e0b','#10b981','#6366f1']}]},options:{plugins:{legend:{display:false}}}});return d;}
+function atualizarDuzias(){
+  const d=[0,0,0];
+  sessao.forEach(n=>{
+    if(n>=1&&n<=12) d[0]++;
+    else if(n<=24) d[1]++;
+    else if(n<=36) d[2]++;
+  });
+  if(chartDuzias) chartDuzias.destroy();
+  chartDuzias=new Chart(graficoDuzias,{type:'bar',data:{labels:['1ª','2ª','3ª'],datasets:[{data:d,backgroundColor:['#f59e0b','#10b981','#6366f1']}]},options:{plugins:{legend:{display:false}}}});
+  return d;
+}
 
-function atualizarColunas(){const c=[0,0,0];sessao.forEach(n=>{if(col1.includes(n))c[0]++;else if(col2.includes(n))c[1]++;else if(col3.includes(n))c[2]++;});if(chartColunas)chartColunas.destroy();chartColunas=new Chart(graficoColunas,{type:'bar',data:{labels:['C1','C2','C3'],datasets:[{data:c,backgroundColor:['#ef4444','#3b82f6','#22c55e']}]},options:{plugins:{legend:{display:false}}}});return c;}
+function atualizarColunas(){
+  const c=[0,0,0];
+  sessao.forEach(n=>{
+    if(col1.includes(n)) c[0]++;
+    else if(col2.includes(n)) c[1]++;
+    else if(col3.includes(n)) c[2]++;
+  });
+  if(chartColunas) chartColunas.destroy();
+  chartColunas=new Chart(graficoColunas,{type:'bar',data:{labels:['C1','C2','C3'],datasets:[{data:c,backgroundColor:['#ef4444','#3b82f6','#22c55e']}]},options:{plugins:{legend:{display:false}}}});
+  return c;
+}
 
-function atualizarCores(){let r=0,p=0,g=0;sessao.forEach(n=>{if(vermelho.includes(n))r++;else if(preto.includes(n))p++;else g++;});if(chartCores)chartCores.destroy();chartCores=new Chart(graficoCores,{type:'pie',data:{labels:['Vermelho','Preto','Zero'],datasets:[{data:[r,p,g],backgroundColor:['#dc2626','#020617','#16a34a']}]}});}
-
-function atualizarAreas(){const d=[sessao.filter(n=>tiers.includes(n)).length,sessao.filter(n=>orp.includes(n)).length,sessao.filter(n=>voi.includes(n)).length];if(chartAreas)chartAreas.destroy();chartAreas=new Chart(graficoAreas,{type:'bar',data:{labels:['Tiers','Orphelins','Voisins'],datasets:[{data:d,backgroundColor:['#3b82f6','#f97316','#ef4444']}]},options:{plugins:{legend:{display:false}}}});const m=Math.max(...d);document.getElementById('areasSugestao').innerText=m?`Área dominante: ${['Tiers','Orphelins','Voisins'][d.indexOf(m)]}`:'Sem dados';}
-
-function atualizarAtrasos(){const a=[['Tiers',tiers],['Orphelins',orp],['Voisins',voi]].map(([n,l])=>{let i=sessao.length-1,c=0;while(i>=0&&!l.includes(sessao[i])){c++;i--;}return `${n}: ${i<0?'-':c}`;});document.getElementById('atrasos').innerText=a.join(' | ');}
-
-
-function atualizarSugestao(){
-
-  if(sessao.length < 10){
-    document.getElementById('sugestao').innerText =
-      'Sessão curta — aguarde mais giros';
-    return;
-  }
-
-  // === Leituras base ===
-  const duzias = atualizarDuzias();
-  const colunas = atualizarColunas();
-
-  const idxD = duzias.indexOf(Math.max(...duzias));
-  const idxC = colunas.indexOf(Math.max(...colunas));
-
-  const duziaNums = [
-    Array.from({length:12},(_,i)=>i+1),
-    Array.from({length:12},(_,i)=>i+13),
-    Array.from({length:12},(_,i)=>i+25)
-  ][idxD];
-
-  const colunaNums = [col1, col2, col3][idxC];
-
-  // === Área dominante ===
-  const areaCont = [
-    sessao.filter(n=>tiers.includes(n)).length,
-    sessao.filter(n=>orp.includes(n)).length,
-    sessao.filter(n=>voi.includes(n)).length
-  ];
-  const idxArea = areaCont.indexOf(Math.max(...areaCont));
-  const areaList = [tiers, orp, voi][idxArea];
-  const areaNome = ['Tiers','Orphelins','Voisins'][idxArea];
-
-  // === Cor dominante ===
-  let r=0,p=0;
+function atualizarCores(){
+  let r=0,p=0,g=0;
   sessao.forEach(n=>{
     if(vermelho.includes(n)) r++;
     else if(preto.includes(n)) p++;
+    else g++;
   });
-  const corDominante = r>p?'V':'P';
-
-  // === Últimos números (evitar) ===
-  const ultimos = sessao.slice(-5);
-
-  // === Pontuação ===
-  const candidatos = [];
-
-  for(let n=0;n<=36;n++){
-    let score = 0;
-
-    if(duziaNums.includes(n)) score += 2;
-    if(colunaNums.includes(n)) score += 2;
-    if(areaList.includes(n)) score += 3;
-
-    if(corDominante==='V' && vermelho.includes(n)) score += 1;
-    if(corDominante==='P' && preto.includes(n)) score += 1;
-
-    if(ultimos.includes(n)) score -= 2;
-
-    if(score >= 4){
-      candidatos.push({n,score});
-    }
-  }
-
-  if(candidatos.length === 0){
-    document.getElementById('sugestao').innerText =
-      'Sem entrada clara no momento';
-    return;
-  }
-
-  candidatos.sort((a,b)=>b.score-a.score);
-
-  document.getElementById('sugestao').innerText =
-    `Área: ${areaNome}
-` +
-    `Números sugeridos: ${candidatos.slice(0,8).map(o=>o.n).join(', ')}`;
+  if(chartCores) chartCores.destroy();
+  chartCores=new Chart(graficoCores,{type:'pie',data:{labels:['Vermelho','Preto','Zero'],datasets:[{data:[r,p,g],backgroundColor:['#dc2626','#020617','#16a34a']}]}})
 }
 
-function verificarAlertas(){const u=sessao.slice(-3);const a=document.getElementById('alerta');if(u.length===3&&u.every(n=>vermelho.includes(n)))a.innerText='🔥 3 Vermelhos → possível Preto';else if(u.length===3&&u.every(n=>preto.includes(n)))a.innerText='🔥 3 Pretos → possível Vermelho';else a.innerText='Nenhum alerta ativo';}
+function atualizarAreas(){
+  const d=[sessao.filter(n=>tiers.includes(n)).length,sessao.filter(n=>orp.includes(n)).length,sessao.filter(n=>voi.includes(n)).length];
+  if(chartAreas) chartAreas.destroy();
+  chartAreas=new Chart(graficoAreas,{type:'bar',data:{labels:['Tiers','Orphelins','Voisins'],datasets:[{data:d,backgroundColor:['#3b82f6','#f97316','#ef4444']}]},options:{plugins:{legend:{display:false}}}});
+  document.getElementById('areasSugestao').innerText=`Área forte: ${['Tiers','Orphelins','Voisins'][d.indexOf(Math.max(...d))]}`;
+}
 
+function atualizarAtrasos(){
+  const txt=[['Tiers',tiers],['Orphelins',orp],['Voisins',voi]].map(([n,l])=>{
+    let i=sessao.length-1,c=0;
+    while(i>=0&&!l.includes(sessao[i])){c++;i--;}
+    return `${n}: ${i<0?'-':c}`;
+  });
+  document.getElementById('atrasos').innerText=txt.join(' | ');
+}
+
+function verificarAlertas(){
+  const u=sessao.slice(-3);
+  const a=document.getElementById('alerta');
+  if(u.length===3&&u.every(n=>vermelho.includes(n))) a.innerText='🔥 3 Vermelhos → possível Preto';
+  else if(u.length===3&&u.every(n=>preto.includes(n))) a.innerText='🔥 3 Pretos → possível Vermelho';
+  else a.innerText='Nenhum alerta ativo';
+}
+
+// Atualiza tudo
+function atualizarTudo(){
+  atualizarFrequencia();
+  atualizarDuzias();
+  atualizarColunas();
+  atualizarCores();
+  atualizarAreas();
+  atualizarAtrasos();
+  atualizarSugestao();
+  atualizarSessaoAtual();
+  verificarAlertas();
+}
+
+// Cria o teclado de entrada rápida
 const topo=document.getElementById('tecladoTopo');
-for(let i=0;i<=36;i++){const b=document.createElement('button');b.innerText=i;b.className=vermelho.includes(i)?'red':preto.includes(i)?'black':'green';b.onclick=()=>processarNumero(i);topo.appendChild(b);}atualizarTudo();
-</script>
+for(let i=0;i<=36;i++){
+  const b=document.createElement('button');
+  b.innerText=i;
+  b.className=vermelho.includes(i)?'red':preto.includes(i)?'black':'green';
+  b.onclick=()=>processarNumero(i);
+  topo.appendChild(b);
+}
 
+atualizarTudo();
+</script>
 </body>
 </html>
