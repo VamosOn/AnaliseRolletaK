@@ -1,371 +1,243 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Probabilidades da Roleta</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard Profissional de Roleta – Completo</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f8f8f8;
-    margin: 0;
-    padding: 10px;
-  }
-  .container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .card {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
-  }
-  input[type="number"] {
-    width: 100%;
-    padding: 8px;
-    font-size: 1em;
-    margin-bottom: 8px;
-  }
-  button {
-    padding: 10px;
-    font-size: 1em;
-    width: 100%;
-    margin-bottom: 8px;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    background-color: #007bff;
-  }
-  button.red {
-    background-color: #dc3545;
-  }
-  canvas {
-    max-width: 100% !important;
-    height: 180px !important;
-  }
-  h3 {
-    font-size: 1em;
-    margin-bottom: 8px;
-  }
-  p {
-    font-size: 0.95em;
-    margin: 0;
-    white-space: pre-line;
-  }
+:root{
+  --bg:#020617;
+  --panel:#111827;
+  --border:#1f2937;
+  --text:#e5e7eb;
+  --muted:#9ca3af;
+  --red:#dc2626;
+  --green:#16a34a;
+  --blue:#3b82f6;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif}
+header{padding:16px;text-align:center;border-bottom:1px solid var(--border)}
+.dashboard{display:grid;grid-template-columns:2fr 1fr;gap:12px;padding:12px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:14px}
+.card h3{margin:0 0 10px;font-size:14px}
+.btn{width:100%;padding:10px;border:none;border-radius:10px;font-weight:600;cursor:pointer;background:var(--blue);color:white}
+.btn.red{background:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.grid button{padding:10px;border-radius:8px;border:none;font-weight:600;cursor:pointer}
+.red{background:var(--red);color:white}
+.black{background:#020617;color:white}
+.green{background:var(--green);color:white}
+.history{display:flex;gap:6px;overflow-x:auto}
+.history span{padding:6px 10px;border-radius:8px;font-weight:600;color:white}
+.alert{padding:10px;border-radius:10px;border:1px dashed var(--border);color:#fbbf24}
+.info{font-size:13px;color:var(--muted)}
+canvas{max-height:220px}
+@media(max-width:900px){
+  .dashboard{grid-template-columns:1fr}
+}
+
+@media(max-width:600px){
+  header h1{font-size:18px}
+  .card{padding:12px;border-radius:14px}
+  .card h3{font-size:13px}
+  .grid{grid-template-columns:repeat(5,1fr)}
+  .grid button{padding:8px;font-size:13px}
+  .history span{padding:5px 8px;font-size:12px}
+  canvas{max-height:180px}
+  .btn{padding:12px;font-size:14px}
+}
+
+@media(max-width:400px){
+  .grid{grid-template-columns:repeat(4,1fr)}
+  header{padding:12px}
+  header h1{font-size:16px}
+}}
 </style>
+
 </head>
 <body>
-<h2 style="text-align:center; font-size: 1.2em;">🔮 Análise da Rolleta K</h2>
-<div class="container">
-  <div class="card">
-    <input id="numero" max="36" min="0" placeholder="Digite um número (0-36)" type="number"/>
-    <button onclick="adicionarNumero()">Adicionar Número</button>
-    <button class="red" onclick="limpar()">Limpar Tudo</button>
-  </div>
-  <div class="card">
-    <h3>🔢 Números Adicionados</h3>
-    <p id="numerosLista">Nenhum número ainda.</p>
-  </div>
-  <div class="card">
-    <h3>📈 Frequência dos Números</h3>
-    <canvas id="graficoFrequencia"></canvas>
-  </div>
-  <div class="card">
-    <h3>🔁 Padrões</h3>
-    <p id="padroes">Nenhum padrão ainda.</p>
-  </div>
-  <div class="card">
-    <h3>🔚 Terminais Mais Frequentes</h3>
-    <p id="terminais">---</p>
-  </div>
-  <div class="card">
-    <h3>📊 Dúzias</h3>
-    <canvas id="graficoDuzias"></canvas>
-  </div>
-  <div class="card">
-    <h3>📊 Colunas</h3>
-    <canvas id="graficoColunas"></canvas>
-  </div>
-  <div class="card">
-    <h3>📍 Áreas da Roleta Mais Frequentes</h3>
-    <canvas id="graficoAreas"></canvas>
-    <p id="areasSugestao">---</p>
-  </div>
-  <div class="card">
-    <h3>🎨 Cores</h3>
-    <p id="coresInfo">---</p>
-    <canvas id="graficoCores"></canvas>
-  </div>
-  <div class="card">
-    <h3>🐎 Cavalos Mais Frequentes</h3>
-    <p id="cavalos">---</p>
-  </div>
-  <div class="card">
-    <h3>⚖️ Par ou Ímpar</h3>
-    <p id="parImpar">---</p>
-  </div>
-  <div class="card">
-    <h3>🎯 Sugestão de Jogada</h3>
-    <p id="sugestao">---</p>
-  </div>
+<header><h1>🎰 Dashboard Profissional de Roleta – Completo</h1></header>
+<div class="dashboard">
+
+<div class="card">
+<h3>🎯 Entrada Rápida</h3>
+<div class="grid" id="tecladoTopo"></div>
+<button class="btn red" style="margin-top:10px" onclick="novaSessao()">🧹 Nova Sessão</button>
+</div>
+
+<div class="card">
+<h3>📊 Sessão Atual</h3>
+<p class="info" id="infoSessao"></p>
+</div>
+
+<div class="card">
+<h3>🚨 Alertas Inteligentes</h3>
+<div id="alerta" class="alert">Nenhum alerta ativo</div>
+</div>
+
+<div class="card"><h3>📜 Histórico (Sessão)</h3><div id="historico" class="history"></div></div>
+
+<div class="card"><h3>📊 Frequência</h3><canvas id="graficoFreq"></canvas></div>
+<div class="card"><h3>📊 Dúzias</h3><canvas id="graficoDuzias"></canvas></div>
+<div class="card"><h3>📊 Colunas</h3><canvas id="graficoColunas"></canvas></div>
+<div class="card"><h3>🎨 Cores</h3><canvas id="graficoCores"></canvas></div>
+
+<div class="card"><h3>🔥 Heatmap por Área</h3><canvas id="graficoAreas"></canvas><p id="areasSugestao" class="info"></p></div>
+
+<div class="card"><h3>⏳ Ciclos de Atraso</h3><p id="atrasos" class="info"></p></div>
+
+<div class="card"><h3>🎯 Sugestão de Jogada</h3><p id="sugestao" class="info"></p></div>
+
 </div>
 
 <script>
-  const numeros = JSON.parse(localStorage.getItem('numeros')) || [];
+const vermelho=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+const preto=[2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
+const col1=[1,4,7,10,13,16,19,22,25,28,31,34];
+const col2=[2,5,8,11,14,17,20,23,26,29,32,35];
+const col3=[3,6,9,12,15,18,21,24,27,30,33,36];
 
-  const vermelho = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
-  const preto = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35];
-  const verde = [0];
+const tiers=[5,8,10,11,13,16,23,24,27,30,33,36];
+const orp=[1,6,9,14,17,20,31,34];
+const voi=[0,2,3,4,7,12,15,18,21,19,22,26,25,28,29,32,35];
 
-  const col1 = [1,4,7,10,13,16,19,22,25,28,31,34];
-  const col2 = [2,5,8,11,14,17,20,23,26,29,32,35];
-  const col3 = [3,6,9,12,15,18,21,24,27,30,33,36];
+let sessao=[];
+let inicioSessao=new Date();
 
-  const cavalos = {
-    '1-4-7-0': [1,4,7,0],
-    '2-5-8': [2,5,8],
-    '3-6-9': [3,6,9]
-  };
+let chartFreq,chartDuzias,chartColunas,chartCores,chartAreas;
 
-  const ctxFreq = document.getElementById('graficoFrequencia').getContext('2d');
-  const ctxDuzias = document.getElementById('graficoDuzias').getContext('2d');
-  const ctxColunas = document.getElementById('graficoColunas').getContext('2d');
-  const ctxCores = document.getElementById('graficoCores').getContext('2d');
-  const ctxAreas = document.getElementById('graficoAreas').getContext('2d');
+function processarNumero(n){
+  sessao.push(n);
+  atualizarHistorico(n);
+  atualizarTudo();
+}
 
-  let chartFreq, chartDuzias, chartColunas, chartCores, chartAreas;
+function novaSessao(){
+  sessao=[];
+  resultado=0;
+  inicioSessao=new Date();
+  document.getElementById('historico').innerHTML='';
+  atualizarTudo();
+}
 
-  function adicionarNumero() {
-    const input = document.getElementById('numero');
-    const valor = parseInt(input.value);
-    if (!isNaN(valor) && valor >= 0 && valor <= 36) {
-      numeros.push(valor);
-      input.value = '';
-      localStorage.setItem('numeros', JSON.stringify(numeros));
-      atualizarTudo();
+function atualizarHistorico(n){
+  const h=document.getElementById('historico');
+  const s=document.createElement('span');
+  s.innerText=n;
+  s.style.background=vermelho.includes(n)?'var(--red)':preto.includes(n)?'#020617':'var(--green)';
+  h.prepend(s);
+  if(h.children.length>20)h.removeChild(h.lastChild);
+}
+
+function atualizarTudo(){
+  document.getElementById('infoSessao').innerText=`Giros: ${sessao.length} | Início: ${inicioSessao.toLocaleTimeString()}`;
+  atualizarFrequencia();atualizarDuzias();atualizarColunas();atualizarCores();atualizarAreas();atualizarAtrasos();atualizarSugestao();verificarAlertas();
+}
+
+function atualizarFrequencia(){
+  const c=Array(37).fill(0);sessao.forEach(n=>c[n]++);
+  if(chartFreq)chartFreq.destroy();
+  chartFreq=new Chart(graficoFreq,{type:'bar',data:{labels:[...Array(37).keys()],datasets:[{data:c,backgroundColor:'#3b82f6'}]},options:{plugins:{legend:{display:false}}}});
+}
+
+function atualizarDuzias(){const d=[0,0,0];sessao.forEach(n=>{if(n>=1&&n<=12)d[0]++;else if(n<=24)d[1]++;else if(n<=36)d[2]++;});if(chartDuzias)chartDuzias.destroy();chartDuzias=new Chart(graficoDuzias,{type:'bar',data:{labels:['1ª','2ª','3ª'],datasets:[{data:d,backgroundColor:['#f59e0b','#10b981','#6366f1']}]},options:{plugins:{legend:{display:false}}}});return d;}
+
+function atualizarColunas(){const c=[0,0,0];sessao.forEach(n=>{if(col1.includes(n))c[0]++;else if(col2.includes(n))c[1]++;else if(col3.includes(n))c[2]++;});if(chartColunas)chartColunas.destroy();chartColunas=new Chart(graficoColunas,{type:'bar',data:{labels:['C1','C2','C3'],datasets:[{data:c,backgroundColor:['#ef4444','#3b82f6','#22c55e']}]},options:{plugins:{legend:{display:false}}}});return c;}
+
+function atualizarCores(){let r=0,p=0,g=0;sessao.forEach(n=>{if(vermelho.includes(n))r++;else if(preto.includes(n))p++;else g++;});if(chartCores)chartCores.destroy();chartCores=new Chart(graficoCores,{type:'pie',data:{labels:['Vermelho','Preto','Zero'],datasets:[{data:[r,p,g],backgroundColor:['#dc2626','#020617','#16a34a']}]}});}
+
+function atualizarAreas(){const d=[sessao.filter(n=>tiers.includes(n)).length,sessao.filter(n=>orp.includes(n)).length,sessao.filter(n=>voi.includes(n)).length];if(chartAreas)chartAreas.destroy();chartAreas=new Chart(graficoAreas,{type:'bar',data:{labels:['Tiers','Orphelins','Voisins'],datasets:[{data:d,backgroundColor:['#3b82f6','#f97316','#ef4444']}]},options:{plugins:{legend:{display:false}}}});const m=Math.max(...d);document.getElementById('areasSugestao').innerText=m?`Área dominante: ${['Tiers','Orphelins','Voisins'][d.indexOf(m)]}`:'Sem dados';}
+
+function atualizarAtrasos(){const a=[['Tiers',tiers],['Orphelins',orp],['Voisins',voi]].map(([n,l])=>{let i=sessao.length-1,c=0;while(i>=0&&!l.includes(sessao[i])){c++;i--;}return `${n}: ${i<0?'-':c}`;});document.getElementById('atrasos').innerText=a.join(' | ');}
+
+
+function atualizarSugestao(){
+
+  if(sessao.length < 10){
+    document.getElementById('sugestao').innerText =
+      'Sessão curta — aguarde mais giros';
+    return;
+  }
+
+  // === Leituras base ===
+  const duzias = atualizarDuzias();
+  const colunas = atualizarColunas();
+
+  const idxD = duzias.indexOf(Math.max(...duzias));
+  const idxC = colunas.indexOf(Math.max(...colunas));
+
+  const duziaNums = [
+    Array.from({length:12},(_,i)=>i+1),
+    Array.from({length:12},(_,i)=>i+13),
+    Array.from({length:12},(_,i)=>i+25)
+  ][idxD];
+
+  const colunaNums = [col1, col2, col3][idxC];
+
+  // === Área dominante ===
+  const areaCont = [
+    sessao.filter(n=>tiers.includes(n)).length,
+    sessao.filter(n=>orp.includes(n)).length,
+    sessao.filter(n=>voi.includes(n)).length
+  ];
+  const idxArea = areaCont.indexOf(Math.max(...areaCont));
+  const areaList = [tiers, orp, voi][idxArea];
+  const areaNome = ['Tiers','Orphelins','Voisins'][idxArea];
+
+  // === Cor dominante ===
+  let r=0,p=0;
+  sessao.forEach(n=>{
+    if(vermelho.includes(n)) r++;
+    else if(preto.includes(n)) p++;
+  });
+  const corDominante = r>p?'V':'P';
+
+  // === Últimos números (evitar) ===
+  const ultimos = sessao.slice(-5);
+
+  // === Pontuação ===
+  const candidatos = [];
+
+  for(let n=0;n<=36;n++){
+    let score = 0;
+
+    if(duziaNums.includes(n)) score += 2;
+    if(colunaNums.includes(n)) score += 2;
+    if(areaList.includes(n)) score += 3;
+
+    if(corDominante==='V' && vermelho.includes(n)) score += 1;
+    if(corDominante==='P' && preto.includes(n)) score += 1;
+
+    if(ultimos.includes(n)) score -= 2;
+
+    if(score >= 4){
+      candidatos.push({n,score});
     }
   }
 
-  function limpar() {
-    numeros.length = 0;
-    localStorage.removeItem('numeros');
-    atualizarTudo();
+  if(candidatos.length === 0){
+    document.getElementById('sugestao').innerText =
+      'Sem entrada clara no momento';
+    return;
   }
 
-  function atualizarTudo() {
-    atualizarAreasRoleta();
-    document.getElementById('numerosLista').innerText = numeros.join(', ') || 'Nenhum número ainda.';
-    atualizarFrequencia();
-    detectarPadroes();
-    atualizarTerminais();
-    atualizarDuzias();
-    atualizarColunas();
-    atualizarCores();
-    atualizarCavalos();
-    atualizarParImpar();
-    atualizarSugestao();
-  }
+  candidatos.sort((a,b)=>b.score-a.score);
 
-  function atualizarFrequencia() {
-    const contagem = Array(37).fill(0);
-    numeros.forEach(n => contagem[n]++);
-    const labels = contagem.map((_, i) => i);
-    const data = contagem;
+  document.getElementById('sugestao').innerText =
+    `Área: ${areaNome}
+` +
+    `Números sugeridos: ${candidatos.slice(0,8).map(o=>o.n).join(', ')}`;
+}
 
-    if (chartFreq) chartFreq.destroy();
-    chartFreq = new Chart(ctxFreq, {
-      type: 'bar',
-      data: { labels, datasets: [{ label: 'Frequência', data, backgroundColor: '#3b82f6' }] },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-  }
+function verificarAlertas(){const u=sessao.slice(-3);const a=document.getElementById('alerta');if(u.length===3&&u.every(n=>vermelho.includes(n)))a.innerText='🔥 3 Vermelhos → possível Preto';else if(u.length===3&&u.every(n=>preto.includes(n)))a.innerText='🔥 3 Pretos → possível Vermelho';else a.innerText='Nenhum alerta ativo';}
 
-  function detectarPadroes() {
-    const ultimos = numeros.slice(-5);
-    const repetidos = ultimos.filter((n, i, arr) => arr.indexOf(n) !== i);
-    document.getElementById('padroes').innerText =
-      repetidos.length > 0 ? `Repetidos recentemente: ${[...new Set(repetidos)].join(', ')}` : 'Nenhum padrão detectado.';
-  }
-
-  function atualizarTerminais() {
-    const terminais = Array(10).fill(0);
-    numeros.forEach(n => {
-      if (n !== 0) terminais[n % 10]++;
-    });
-
-    const indicesOrdenados = terminais
-      .map((v, i) => ({ terminal: i, count: v }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 4)
-      .filter(item => item.count > 0)
-      .map(item => item.terminal);
-
-    document.getElementById('terminais').innerText =
-      indicesOrdenados.length === 0 ? 'Nenhum terminal ainda.' : `Top 4 terminais: ${indicesOrdenados.join(', ')}`;
-  }
-
-  function atualizarDuzias() {
-    const duzias = [0,0,0];
-    numeros.forEach(n => {
-      if (n >= 1 && n <= 12) duzias[0]++;
-      else if (n <= 24) duzias[1]++;
-      else if (n <= 36) duzias[2]++;
-    });
-
-    if (chartDuzias) chartDuzias.destroy();
-    chartDuzias = new Chart(ctxDuzias, {
-      type: 'bar',
-      data: {
-        labels: ['1ª Dúzia', '2ª Dúzia', '3ª Dúzia'],
-        datasets: [{ label: 'Ocorrências', data: duzias, backgroundColor: ['#f59e0b','#10b981','#6366f1'] }]
-      },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-
-    return duzias;
-  }
-
-  function atualizarColunas() {
-    const cols = [0,0,0];
-    numeros.forEach(n => {
-      if (col1.includes(n)) cols[0]++;
-      else if (col2.includes(n)) cols[1]++;
-      else if (col3.includes(n)) cols[2]++;
-    });
-
-    if (chartColunas) chartColunas.destroy();
-    chartColunas = new Chart(ctxColunas, {
-      type: 'bar',
-      data: {
-        labels: ['Coluna 1', 'Coluna 2', 'Coluna 3'],
-        datasets: [{ label: 'Ocorrências', data: cols, backgroundColor: ['#ef4444','#3b82f6','#22c55e'] }]
-      },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-
-    return cols;
-  }
-
-  function atualizarCores() {
-    let r = 0, p = 0, g = 0;
-    numeros.forEach(n => {
-      if (vermelho.includes(n)) r++;
-      else if (preto.includes(n)) p++;
-      else if (n === 0) g++;
-    });
-
-    document.getElementById('coresInfo').innerText = `Vermelhos: ${r}, Pretos: ${p}, Verdes: ${g}`;
-
-    if (chartCores) chartCores.destroy();
-    chartCores = new Chart(ctxCores, {
-      type: 'pie',
-      data: {
-        labels: ['Vermelho', 'Preto', 'Verde'],
-        datasets: [{
-          data: [r, p, g],
-          backgroundColor: ['#dc2626', '#1f2937', '#22c55e']
-        }]
-      },
-      options: { responsive: true }
-    });
-  }
-
-  function atualizarCavalos() {
-    const contagem = { '1-4-7-0': 0, '2-5-8': 0, '3-6-9': 0 };
-    numeros.forEach(n => {
-      for (const cav in cavalos) {
-        if (cavalos[cav].includes(n)) contagem[cav]++;
-      }
-    });
-    const maisFrequente = Object.entries(contagem).sort((a, b) => b[1] - a[1])[0];
-    document.getElementById('cavalos').innerText = `${maisFrequente[0]} (${maisFrequente[1]}x)`;
-  }
-
-  function atualizarParImpar() {
-    let par = 0, impar = 0;
-    numeros.forEach(n => {
-      if (n !== 0) {
-        if (n % 2 === 0) par++;
-        else impar++;
-      }
-    });
-    document.getElementById('parImpar').innerText = `Pares: ${par}, Ímpares: ${impar}`;
-  }
-
-  function atualizarSugestao() {
-    const duzias = atualizarDuzias();
-    const colunas = atualizarColunas();
-
-    const iDuzia = duzias.indexOf(Math.max(...duzias));
-    const iColuna = colunas.indexOf(Math.max(...colunas));
-
-    const duziaNumeros = [
-      Array.from({length:12},(_,i)=>i+1),
-      Array.from({length:12},(_,i)=>i+13),
-      Array.from({length:12},(_,i)=>i+25)
-    ][iDuzia];
-
-    const colNumeros = [col1, col2, col3][iColuna];
-
-    const sugestao = duziaNumeros.filter(n => colNumeros.includes(n));
-
-    const duziaStr = ['1ª Dúzia','2ª Dúzia','3ª Dúzia'][iDuzia];
-    const colunaStr = ['Coluna 1','Coluna 2','Coluna 3'][iColuna];
-
-    document.getElementById('sugestao').innerText = `Dúzia mais frequente: ${duziaStr}\nColuna mais frequente: ${colunaStr}\nSugestão de números: ${sugestao.join(', ')}`;
-  }
-
-  function atualizarAreasRoleta() {
-    const tiers = [27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33];
-    const orphelins = [1, 20, 14, 31, 9, 17, 34, 6];
-    const voisins = [19, 4, 21, 2, 25, 22, 18, 29, 7, 28];
-    const zero = [12, 35, 3, 26, 0, 32, 15];
-
-    const freqTiers = numeros.filter(n => tiers.includes(n)).length;
-    const freqOrphelins = numeros.filter(n => orphelins.includes(n)).length;
-    const freqVoisins = numeros.filter(n => voisins.includes(n)).length;
-    const freqZero = numeros.filter(n => zero.includes(n)).length;
-
-    const labels = ['Tiers', 'Orphelins', 'Voisins', 'Zero'];
-    const data = [freqTiers, freqOrphelins, freqVoisins, freqZero];
-    const colors = ['#3b82f6', '#f97316', '#ef4444', '#22c55e']; // azul, laranja, vermelho, verde
-
-    if (chartAreas) chartAreas.destroy();
-    chartAreas = new Chart(ctxAreas, {
-      type: 'bar',
-      data: {
-        labels,
-        datasets: [{
-          label: 'Ocorrências',
-          data,
-          backgroundColor: colors
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { enabled: true }
-        },
-        scales: {
-          y: { beginAtZero: true, precision: 0 }
-        }
-      }
-    });
-
-    const maxFreq = Math.max(...data);
-    const idx = data.indexOf(maxFreq);
-    const sugestao = maxFreq > 0 
-      ? `Região mais provável para entrada: ${labels[idx]} (${maxFreq} vezes)`
-      : 'Nenhuma região com números registrados ainda.';
-
-    document.getElementById('areasSugestao').innerText = sugestao;
-  }
-
-  atualizarTudo();
+const topo=document.getElementById('tecladoTopo');
+for(let i=0;i<=36;i++){const b=document.createElement('button');b.innerText=i;b.className=vermelho.includes(i)?'red':preto.includes(i)?'black':'green';b.onclick=()=>processarNumero(i);topo.appendChild(b);}atualizarTudo();
 </script>
+
 </body>
 </html>
